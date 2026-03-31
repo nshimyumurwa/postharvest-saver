@@ -177,7 +177,7 @@ Restart=always
 WantedBy=multi-user.target
 ```
 
-#### 1h. Start and enable the service
+1h. Start and enable the service
 ```bash
 sudo systemctl daemon-reload
 sudo systemctl start postharvest
@@ -185,37 +185,35 @@ sudo systemctl enable postharvest
 sudo systemctl status postharvest   # Should show: active (running)
 ```
 
-#### 1i. Verify the app is running
+1i. Verify the app is running
 ```bash
 curl http://localhost:5000/health
 # Expected: {"app":"PostHarvestSaver","status":"ok","version":"1.0.0"}
 ```
 
----
 
-### Step 2 — Configure the Load Balancer (Lb01)
+Step 2 — Configure the Load Balancer (Lb01)
 
 #### 2a. Connect to Lb01
 ```bash
-ssh ubuntu@<LB01_IP>
+ssh ubuntu@<54.210.206.210>
 ```
 
-#### 2b. Install Nginx
+2b. Install Nginx
 ```bash
 sudo apt update
 sudo apt install nginx -y
 ```
 
-#### 2c. Configure Nginx as a load balancer
+2c. Configure Nginx as a load balancer
 ```bash
 sudo nano /etc/nginx/sites-available/postharvest
 ```
 
-Paste the following (replace IPs with your actual Web01 and Web02 IPs):
 ```nginx
 upstream postharvest_servers {
-    server <WEB01_IP>:5000 weight=1;
-    server <WEB02_IP>:5000 weight=1;
+    server <44.203.195.131>:5000 weight=1;
+    server <13.222.52.30>:5000 weight=1;
 }
 
 server {
@@ -238,7 +236,7 @@ server {
 }
 ```
 
-#### 2d. Enable the configuration and restart Nginx
+2d. Enable the configuration and restart Nginx
 ```bash
 sudo ln -s /etc/nginx/sites-available/postharvest /etc/nginx/sites-enabled/
 sudo nginx -t                  # Test config — should say "syntax is ok"
@@ -246,7 +244,7 @@ sudo systemctl restart nginx
 sudo systemctl enable nginx
 ```
 
-#### 2e. Verify load balancing works
+2e. Verify load balancing works
 ```bash
 # Hit the load balancer multiple times and watch it rotate servers
 for i in {1..6}; do curl -s http://<LB01_IP>/health; echo; done
@@ -254,9 +252,8 @@ for i in {1..6}; do curl -s http://<LB01_IP>/health; echo; done
 
 You should see successful responses — Nginx is distributing traffic between Web01 and Web02.
 
----
 
-## Security Practices
+Security Practices
 
 - API keys are stored in `.env` files — **never committed to GitHub**
 - `.gitignore` excludes `.env` and `__pycache__`
@@ -264,19 +261,17 @@ You should see successful responses — Nginx is distributing traffic between We
 - Error messages never expose internal system details
 - Gunicorn is used in production (not Flask dev server)
 
----
 
-## APIs Used
+APIs Used
 
-### OpenWeatherMap Current Weather API
-- **Documentation**: https://openweathermap.org/current
-- **Endpoint**: `https://api.openweathermap.org/data/2.5/weather`
-- **Plan**: Free tier (1,000 calls/day)
-- **Data used**: Temperature (°C), Humidity (%), Rainfall (mm/1h), Wind speed (m/s)
+OpenWeatherMap Current Weather API
+- Documentation: https://openweathermap.org/current
+- Endpoint: `https://api.openweathermap.org/data/2.5/weather`
+- Plan: Free tier (1,000 calls/day)
+- Data used: Temperature (°C), Humidity (%), Rainfall (mm/1h), Wind speed (m/s)
 
----
 
-## Challenges & Solutions
+Challenges & Solutions
 
 | Challenge | Solution |
 |-----------|----------|
@@ -286,11 +281,9 @@ You should see successful responses — Nginx is distributing traffic between We
 | Load balancer session continuity | Used stateless design (no server-side sessions); history is stored in `localStorage` |
 | OpenWeatherMap rate limits during testing | Implemented timeout and 429 error handling with user-friendly messages |
 
----
 
-## Project Structure
+Project Structure
 
-```
 postharvest-saver/
 ├── app.py               # Flask backend — routes, API calls, risk logic
 ├── requirements.txt     # Python dependencies
@@ -308,20 +301,23 @@ postharvest-saver/
 
 ---
 
-## Credits & Attribution
+Credits & Attribution
 
-- **OpenWeatherMap** — Weather data API · https://openweathermap.org
-- **Flask** — Python web framework · https://flask.palletsprojects.com
-- **Gunicorn** — Python WSGI HTTP server · https://gunicorn.org
-- **Nginx** — Load balancer / reverse proxy · https://nginx.org
-- **FAO** — Post-Harvest Management Guidelines · https://www.fao.org/postharvest
-- **RAB (Rwanda Agriculture Board)** — Crop storage best practices
-- **Google Fonts** — Playfair Display + DM Sans typefaces
+- OpenWeatherMap— Weather data API · https://openweathermap.org
+- Flask — Python web framework · https://flask.palletsprojects.com
+- Gunicorn — Python WSGI HTTP server · https://gunicorn.org
+- Nginx — Load balancer / reverse proxy · https://nginx.org
+- FAO — Post-Harvest Management Guidelines · https://www.fao.org/postharvest
+- RAB (Rwanda Agriculture Board) — Crop storage best practices
+- Google Fonts — Playfair Display + DM Sans typefaces
 
----
+Demo Video
 
-## Author
+Watch the demo of the Postharvest Saver App here:  
+[Postharvest Saver App Demo Video](https://youtu.be/HMTB8Z5IZog)
 
-**Nshimyumurwa Mary Therese**  
+Author
+
+Nshimyumurwa Mary Therese 
 ALU Software Engineering Project
-*PostHarvestSaver — Built to reduce food loss in Rwanda*
+PostHarvestSaver — Built to reduce food loss in Rwanda
