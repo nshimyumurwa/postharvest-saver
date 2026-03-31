@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PostHarvestSaver — Rwanda Crop Spoilage Risk Analyzer</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
+</head>
+<body>
+
+  <!-- Background decoration -->
+  <div class="bg-pattern"></div>
+
+  <!-- Header -->
+  <header class="header">
+    <div class="header-inner">
+      <div class="logo">
+        <span class="logo-leaf">🌿</span>
+        <div class="logo-text">
+          <span class="logo-main">PostHarvestSaver</span>
+          <span class="logo-sub">Rwanda Crop Protection System</span>
+        </div>
+      </div>
+      <div class="header-badge">
+        <span class="badge-dot"></span>
+        Live Weather Data
+      </div>
+    </div>
+  </header>
+
+  <!-- Hero -->
+  <section class="hero">
+    <div class="hero-content">
+      <div class="hero-tag">Powered by Real-Time Weather Intelligence</div>
+      <h1 class="hero-title">Protect Your Harvest<br/><span class="accent">Before It's Too Late</span></h1>
+      <p class="hero-desc">
+        Rwanda loses over <strong>30% of produce</strong> after harvest due to poor storage decisions.
+        PostHarvestSaver uses live weather data to tell you exactly how much risk your crop faces —
+        and what to do right now.
+      </p>
+      <div class="hero-stats">
+        <div class="stat">
+          <span class="stat-num">8</span>
+          <span class="stat-label">Crops Supported</span>
+        </div>
+        <div class="stat-divider"></div>
+        <div class="stat">
+          <span class="stat-num">30</span>
+          <span class="stat-label">Districts Covered</span>
+        </div>
+        <div class="stat-divider"></div>
+        <div class="stat">
+          <span class="stat-num">Live</span>
+          <span class="stat-label">Weather Analysis</span>
+        </div>
+      </div>
+    </div>
+    <div class="hero-visual">
+      <div class="crop-grid">
+        {% for key, crop in crops.items() %}
+        <div class="crop-card-mini" data-crop="{{ key }}">{{ crop.icon }}</div>
+        {% endfor %}
+      </div>
+    </div>
+  </section>
+
+  <!-- Main App -->
+  <main class="main-container">
+
+    <!-- Form Panel -->
+    <section class="form-panel">
+      <h2 class="panel-title">Analyze Your Crop</h2>
+      <p class="panel-subtitle">Select your crop and location to get an instant spoilage risk assessment</p>
+
+      <!-- Crop Selector -->
+      <div class="field-group">
+        <label class="field-label">Select Crop</label>
+        <div class="crop-selector" id="cropSelector">
+          {% for key, crop in crops.items() %}
+          <button class="crop-btn" data-crop="{{ key }}" type="button" aria-label="{{ crop.name }}">
+            <span class="crop-btn-icon">{{ crop.icon }}</span>
+            <span class="crop-btn-name">{{ crop.name }}</span>
+          </button>
+          {% endfor %}
+        </div>
+        <input type="hidden" id="selectedCrop" value="" />
+      </div>
+
+      <!-- District Selector -->
+      <div class="field-group">
+        <label class="field-label" for="districtSelect">Select District</label>
+        <div class="select-wrapper">
+          <select id="districtSelect" class="select-input">
+            <option value="">— Choose your district —</option>
+            {% for district in districts %}
+            <option value="{{ district }}">{{ district }}</option>
+            {% endfor %}
+          </select>
+          <span class="select-arrow">▼</span>
+        </div>
+      </div>
+
+      <!-- Sort/Filter History -->
+      <div class="filter-bar" id="filterBar" style="display:none;">
+        <label class="field-label">Filter History By Risk</label>
+        <div class="filter-btns">
+          <button class="filter-btn active" data-filter="all">All</button>
+          <button class="filter-btn" data-filter="LOW">🟢 Low</button>
+          <button class="filter-btn" data-filter="MEDIUM">🟡 Medium</button>
+          <button class="filter-btn" data-filter="HIGH">🟠 High</button>
+          <button class="filter-btn" data-filter="CRITICAL">🔴 Critical</button>
+        </div>
+        <div class="sort-row">
+          <label class="field-label" style="margin:0">Sort:</label>
+          <select id="sortSelect" class="sort-select">
+            <option value="newest">Newest First</option>
+            <option value="oldest">Oldest First</option>
+            <option value="risk_high">Highest Risk First</option>
+            <option value="risk_low">Lowest Risk First</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Analyze Button -->
+      <button class="analyze-btn" id="analyzeBtn" type="button">
+        <span class="btn-text">Analyze Spoilage Risk</span>
+        <span class="btn-icon">→</span>
+      </button>
+
+      <!-- Error Box -->
+      <div class="error-box" id="errorBox" style="display:none;">
+        <span class="error-icon">⚠️</span>
+        <span id="errorMsg"></span>
+      </div>
+    </section>
+
+    <!-- Results Panel -->
+    <section class="results-panel" id="resultsPanel" style="display:none;">
+
+      <!-- Loading state -->
+      <div class="loading-state" id="loadingState">
+        <div class="spinner"></div>
+        <p>Fetching live weather data for your district...</p>
+      </div>
+
+      <!-- Results content -->
+      <div class="results-content" id="resultsContent" style="display:none;">
+
+        <!-- Result Header -->
+        <div class="result-header" id="resultHeader">
+          <div class="result-crop-info">
+            <span class="result-crop-icon" id="resultCropIcon"></span>
+            <div>
+              <div class="result-crop-name" id="resultCropName"></div>
+              <div class="result-location" id="resultLocation"></div>
+            </div>
+          </div>
+          <div class="result-timestamp" id="resultTimestamp"></div>
+        </div>
+
+        <!-- Risk Meter -->
+        <div class="risk-section">
+          <div class="risk-label">Spoilage Risk Level</div>
+          <div class="risk-meter-container">
+            <div class="risk-meter">
+              <div class="risk-track">
+                <div class="risk-fill" id="riskFill"></div>
+                <div class="risk-thumb" id="riskThumb"></div>
+              </div>
+              <div class="risk-scale">
+                <span>Safe</span>
+                <span>Moderate</span>
+                <span>Danger</span>
+              </div>
+            </div>
+            <div class="risk-badge" id="riskBadge">
+              <span class="risk-emoji" id="riskEmoji"></span>
+              <span class="risk-level-text" id="riskLevelText"></span>
+              <span class="risk-score" id="riskScore"></span>
+              <span class="risk-action-label" id="riskActionLabel"></span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Weather Cards -->
+        <div class="weather-section">
+          <div class="section-label">Current Weather Conditions</div>
+          <div class="weather-grid">
+            <div class="weather-card">
+              <span class="weather-icon">🌡️</span>
+              <span class="weather-value" id="wTemp"></span>
+              <span class="weather-unit">Temperature</span>
+            </div>
+            <div class="weather-card">
+              <span class="weather-icon">💧</span>
+              <span class="weather-value" id="wHumidity"></span>
+              <span class="weather-unit">Humidity</span>
+            </div>
+            <div class="weather-card">
+              <span class="weather-icon">🌧️</span>
+              <span class="weather-value" id="wRainfall"></span>
+              <span class="weather-unit">Rainfall (1h)</span>
+            </div>
+            <div class="weather-card">
+              <span class="weather-icon">💨</span>
+              <span class="weather-value" id="wWind"></span>
+              <span class="weather-unit">Wind Speed</span>
+            </div>
+          </div>
+          <div class="weather-desc" id="weatherDesc"></div>
+        </div>
+
+        <!-- Optimal vs Actual -->
+        <div class="optimal-section">
+          <div class="section-label">Optimal Storage Conditions vs. Current</div>
+          <div class="optimal-grid">
+            <div class="optimal-card">
+              <div class="optimal-label">🌡️ Temperature</div>
+              <div class="optimal-ideal" id="optimalTemp"></div>
+              <div class="optimal-current" id="currentTemp"></div>
+            </div>
+            <div class="optimal-card">
+              <div class="optimal-label">💧 Humidity</div>
+              <div class="optimal-ideal" id="optimalHumidity"></div>
+              <div class="optimal-current" id="currentHumidity"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Risk Factors -->
+        <div class="factors-section" id="factorsSection">
+          <div class="section-label">Risk Factors Detected</div>
+          <ul class="factors-list" id="factorsList"></ul>
+        </div>
+
+        <!-- Recommendations -->
+        <div class="recs-section">
+          <div class="section-label">Recommended Actions</div>
+          <ol class="recs-list" id="recsList"></ol>
+        </div>
+
+        <!-- New Analysis Button -->
+        <button class="new-analysis-btn" id="newAnalysisBtn">
+          + Run Another Analysis
+        </button>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- History Section -->
+  <section class="history-section" id="historySection" style="display:none;">
+    <div class="history-inner">
+      <div class="history-header">
+        <h2 class="history-title">Analysis History</h2>
+        <button class="clear-btn" id="clearHistoryBtn">Clear All</button>
+      </div>
+      <div class="history-grid" id="historyGrid"></div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="footer-inner">
+      <div class="footer-brand">
+        <span>🌿 PostHarvestSaver</span>
+        <span class="footer-tagline">Supporting Rwanda's Vision 2050 Food Security Goals</span>
+      </div>
+      <div class="footer-credits">
+        <div class="footer-credit-title">APIs & Resources Used</div>
+        <a href="https://openweathermap.org/api" target="_blank" rel="noopener">OpenWeatherMap API</a>
+        <span>·</span>
+        <a href="https://flask.palletsprojects.com/" target="_blank" rel="noopener">Flask Framework</a>
+        <span>·</span>
+        <span>FAO Post-Harvest Guidelines</span>
+      </div>
+    </div>
+  </footer>
+
+  <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html>

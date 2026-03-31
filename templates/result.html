@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Risk Report — {{ crop_name }} in {{ district }} | PostHarvestSaver</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/static/css/style.css" />
+</head>
+<body>
+  <nav class="navbar">
+    <div class="nav-brand">
+      <span class="nav-logo">🌱</span>
+      <span class="nav-title">PostHarvestSaver</span>
+    </div>
+    <div class="nav-links">
+      <a href="/" class="nav-link">Home</a>
+      <a href="/about" class="nav-link">About</a>
+    </div>
+  </nav>
+
+  <div class="result-page">
+    <div class="container">
+      <div class="result-header">
+        <a href="/" class="back-link">← New Analysis</a>
+        <p class="result-timestamp">Generated: {{ timestamp }}</p>
+      </div>
+
+      <div class="risk-banner" style="--risk-color: {{ risk.color }};">
+        <div class="risk-banner-left">
+          <div class="risk-emoji-big">{{ crop.emoji }}</div>
+          <div class="risk-info">
+            <h1 class="risk-crop-name">{{ crop_name }}</h1>
+            <p class="risk-location">📍 {{ district }}, {{ province }} Province</p>
+          </div>
+        </div>
+        <div class="risk-badge-container">
+          <div class="risk-badge" style="background: {{ risk.color }};">
+            <span class="risk-level-label">{{ risk.level }} Risk</span>
+            <span class="risk-emoji">{{ risk.emoji }}</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="result-grid">
+        <div class="card risk-meter-card">
+          <h3 class="card-title">Spoilage Risk Score</h3>
+          <div class="risk-meter">
+            <svg viewBox="0 0 200 120" class="gauge-svg">
+              <path d="M 20 100 A 80 80 0 0 1 180 100" fill="none" stroke="#e8e8e0" stroke-width="16" stroke-linecap="round"/>
+              <path d="M 20 100 A 80 80 0 0 1 180 100" fill="none"
+                    stroke="{{ risk.color }}" stroke-width="16" stroke-linecap="round"
+                    stroke-dasharray="{{ (risk.score / 100) * 251.3 }} 251.3"
+                    class="gauge-arc"/>
+              <text x="100" y="95" text-anchor="middle" class="gauge-score" fill="{{ risk.color }}">{{ risk.score }}</text>
+              <text x="100" y="112" text-anchor="middle" class="gauge-label" fill="#888">/100</text>
+            </svg>
+          </div>
+          <p class="risk-advice" style="border-left: 4px solid {{ risk.color }};">{{ risk.advice }}</p>
+          <div class="risk-scale">
+            <div class="scale-item {% if risk.level == 'Low' %}active{% endif %}">
+              <span class="scale-dot" style="background:#52b788"></span>Low
+            </div>
+            <div class="scale-item {% if risk.level == 'Moderate' %}active{% endif %}">
+              <span class="scale-dot" style="background:#f4a261"></span>Moderate
+            </div>
+            <div class="scale-item {% if risk.level == 'High' %}active{% endif %}">
+              <span class="scale-dot" style="background:#e07a5f"></span>High
+            </div>
+            <div class="scale-item {% if risk.level == 'Critical' %}active{% endif %}">
+              <span class="scale-dot" style="background:#e63946"></span>Critical
+            </div>
+          </div>
+        </div>
+
+        <div class="card weather-card">
+          <h3 class="card-title">📡 Live Weather in {{ district }}</h3>
+          <div class="weather-main">
+            <img src="https://openweathermap.org/img/wn/{{ weather.icon }}@2x.png" alt="{{ weather.description }}" class="weather-icon" />
+            <div class="weather-temp">{{ weather.temp }}<span>°C</span></div>
+          </div>
+          <p class="weather-desc">{{ weather.description }}</p>
+          <div class="weather-details">
+            <div class="weather-detail">
+              <span class="detail-icon">💧</span>
+              <span class="detail-label">Humidity</span>
+              <span class="detail-value">{{ weather.humidity }}%</span>
+            </div>
+            <div class="weather-detail">
+              <span class="detail-icon">🌡️</span>
+              <span class="detail-label">Feels Like</span>
+              <span class="detail-value">{{ weather.feels_like }}°C</span>
+            </div>
+            <div class="weather-detail">
+              <span class="detail-icon">💨</span>
+              <span class="detail-label">Wind Speed</span>
+              <span class="detail-value">{{ weather.wind_speed }} km/h</span>
+            </div>
+            <div class="weather-detail">
+              <span class="detail-icon">🌧️</span>
+              <span class="detail-label">Rainfall (1h)</span>
+              <span class="detail-value">{{ weather.rainfall }} mm</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="card warnings-card">
+          <h3 class="card-title">⚠️ Risk Factors Detected</h3>
+          <ul class="warnings-list">
+            {% for warning in risk.warnings %}
+            <li class="warning-item">{{ warning }}</li>
+            {% endfor %}
+          </ul>
+          <h3 class="card-title mt">📊 Crop Info: {{ crop_name }}</h3>
+          <div class="crop-info-grid">
+            <div class="crop-info-item">
+              <span class="info-label">Optimal Temp</span>
+              <span class="info-value">{{ crop.optimal_temp[0] }}–{{ crop.optimal_temp[1] }}°C</span>
+            </div>
+            <div class="crop-info-item">
+              <span class="info-label">Optimal Humidity</span>
+              <span class="info-value">{{ crop.optimal_humidity[0] }}–{{ crop.optimal_humidity[1] }}%</span>
+            </div>
+            <div class="crop-info-item">
+              <span class="info-label">Shelf Life</span>
+              <span class="info-value">Up to {{ crop.shelf_life_days }} days</span>
+            </div>
+            <div class="crop-info-item">
+              <span class="info-label">Moisture Sensitive</span>
+              <span class="info-value">{{ "Yes" if crop.moisture_sensitive else "No" }}</span>
+            </div>
+          </div>
+          <h4 class="sub-title">Known Risks</h4>
+          <ul class="risks-list">
+            {% for r in crop.main_risks %}
+            <li>🔸 {{ r }}</li>
+            {% endfor %}
+          </ul>
+        </div>
+
+        <div class="card tips-card">
+          <h3 class="card-title">✅ Storage Recommendations</h3>
+          <p class="tips-intro">Based on current conditions in {{ district }}, here is what you should do:</p>
+          <ol class="tips-list">
+            {% for tip in crop.storage_tips %}
+            <li class="tip-item">{{ tip }}</li>
+            {% endfor %}
+          </ol>
+          <div class="action-footer">
+            <a href="/" class="btn-secondary">🔁 Check Another Crop</a>
+            <button onclick="window.print()" class="btn-secondary">🖨️ Print Report</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <footer class="footer">
+    <div class="container">
+      <p class="footer-brand">🌱 PostHarvestSaver</p>
+      <p class="footer-credits">
+        Weather data by <a href="https://openweathermap.org/" target="_blank">OpenWeatherMap API</a> &nbsp;|&nbsp;
+        Built with Flask + Python
+      </p>
+    </div>
+  </footer>
+
+  <script src="/static/js/main.js"></script>
+</body>
+</html>
